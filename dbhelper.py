@@ -1,60 +1,51 @@
-from peewee import *
-
-from models import Chat, Queue
+import sqlite3
 
 
-def add_chat(chat_id, language="en"):
-    chat_exists = Chat.select().where(
-        Chat.chat_id == chat_id
-    ).exists()
-
-    if chat_exists:
-        return False
-
-    new_chat = Chat(
-        chat_id=chat_id,
-        language=language
-    )
-    new_chat.save()
-    return True
-
-
-def del_chat(chat_id):
+def create_table_if_not_exists():
     try:
-        chat = Chat.get(Chat.chat_id == chat_id)
-        chat.delete_instance()
-        return True
-    except DoesNotExist:
-        return False
+        cursor.execute("""CREATE TABLE IF NOT EXISTS queues (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name VARCHAR(100),
+            chat_id INTEGER,
+            queue TEXT
+        )""")
+    except sqlite3.DatabaseError as err:
+        print(f"Error: {err}")
+    else:
+        conn.commit()
 
 
-def add_queue(chat_id, name):
-    queue_in_chat_exists = Queue.select().where(
-        Queue.name == name,
-        Queue.chat_id == chat_id
-    ).exists()
-
-    if queue_in_chat_exists:
-        return False
-
-    row = Queue(
-        name=name,
-        chat_id=chat_id,
-        text_represenation="some text"
-    )
-    row.save()
-
-
-def del_queue(chat_id, name):
+def insert(name: str, chat_id: int, queue: list):
     try:
-        queue = Queue.select().where(
-            Queue.queue_name == name,
-            Queue.chat_id == chat_id
-        ).get()
-        queue.delete_instance()
-    except DoesNotExist:
-        return False
+        cursor.execute("""INSERT INTO queues (name, chat_id, queue)
+                        VALUES (?, ?, ?)""", (name, chat_id, str(queue)))
+    except sqlite3.DatabaseError as err:
+        print(f"Error: {err}")
+    else:
+        conn.commit()
+
+def remove(name: str):
+    try:
+        cursor.execute("""DELETE FROM queues WHERE name = ?""", (name,))
+    except sqlite3.DatabaseError as err:
+        print(f"Error: {err}")
+    else:
+        conn.commit()
+
+def clean_table():
+    try:
+        cursor.execute("""DELETE FROM queues""")
+    except sqlite3.DatabaseError as err:
+        print(f"Error: {err}")
+    else:
+        conn.commit()
 
 
-def get_lang(chat_id):
-    return Chat.get(Chat.chat_id == chat_id).language
+if __name__ == "__main__":
+    conn = sqlite3.connect('bot_database.db')
+    cursor = conn.cursor()
+
+    create_table_if_not_exists()
+
+    
+    conn.close()
