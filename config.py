@@ -1,2 +1,2 @@
-API_TOKEN = '864633932:AAFXNooP5q6z_868BN8SUV4eG9HUYx4Qe4k'
-storage_name = ''
+API_TOKEN = 'TOKEN'
+STORAGE_NAME = 'database_path'
