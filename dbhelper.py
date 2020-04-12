@@ -1,51 +1,212 @@
 import sqlite3
+from config import STORAGE_NAME
+import ast
 
 
 def create_table_if_not_exists():
     try:
         cursor.execute("""CREATE TABLE IF NOT EXISTS queues (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name VARCHAR(100),
             chat_id INTEGER,
+            queue_id INTEGER,
+            name VARCHAR(100),
             queue TEXT
         )""")
     except sqlite3.DatabaseError as err:
-        print(f"Error: {err}")
+        raise err
     else:
         conn.commit()
 
 
-def insert(name: str, chat_id: int, queue: list):
+def name_exists_in_chat(name: str, chat_id: int):
+    conn = sqlite3.connect(STORAGE_NAME)
+    cursor = conn.cursor()
+
     try:
-        cursor.execute("""INSERT INTO queues (name, chat_id, queue)
-                        VALUES (?, ?, ?)""", (name, chat_id, str(queue)))
+        cursor.execute("""SELECT * FROM queues
+            WHERE (name = ? and chat_id = ?)
+        """, (name, chat_id))
+
+        result = cursor.fetchone()
+
+        return bool(result)
     except sqlite3.DatabaseError as err:
-        print(f"Error: {err}")
+        raise err
+
+    conn.close()
+
+
+def queue_id_exists_in_chat(chat_id: int, queue_id: int):
+    conn = sqlite3.connect(STORAGE_NAME)
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""SELECT * FROM queues
+            WHERE (queue_id = ? and chat_id = ?)
+        """, (queue_id, chat_id))
+
+        result = cursor.fetchone()
+
+        return bool(result)
+    except sqlite3.DatabaseError as err:
+        raise err
+
+    conn.close()
+
+
+def user_exists_in_queue(chat_id: int, queue_id: int, user_id: int):
+    conn = sqlite3.connect(STORAGE_NAME)
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            """SELECT queue FROM queues
+            WHERE (queue_id = ? and chat_id = ?)
+            """,
+            (queue_id, chat_id)
+        )
+
+        result = cursor.fetchone()[0]
+        queue = ast.literal_eval(result)
+
+        return user_id in queue
+    except sqlite3.DatabaseError as err:
+        raise err
+
+    conn.close()
+
+
+def insert(chat_id: int, queue_id: int, name: str, queue: list):
+    conn = sqlite3.connect(STORAGE_NAME)
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            """INSERT INTO queues (chat_id, queue_id, name, queue)
+            VALUES (?, ?, ?, ?)""",
+            (chat_id, queue_id, name, str(queue))
+        )
+    except sqlite3.DatabaseError as err:
+        raise err
     else:
         conn.commit()
+
+    conn.close()
+
+
+def get_queue(chat_id: int, queue_id: int):
+    conn = sqlite3.connect(STORAGE_NAME)
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            """SELECT name, queue FROM queues
+            WHERE (chat_id = ? and queue_id = ?)
+            """,
+            (chat_id, queue_id)
+        )
+        result = list(cursor.fetchone())
+        result[1] = ast.literal_eval(result[1])
+
+        return result
+    except sqlite3.DatabaseError as err:
+        raise err
+    else:
+        conn.commit()
+
+    conn.close()
+
 
 def remove(name: str):
+    conn = sqlite3.connect(STORAGE_NAME)
+    cursor = conn.cursor()
+
     try:
         cursor.execute("""DELETE FROM queues WHERE name = ?""", (name,))
     except sqlite3.DatabaseError as err:
-        print(f"Error: {err}")
+        raise err
     else:
         conn.commit()
 
+    conn.close()
+
+
 def clean_table():
+    conn = sqlite3.connect(STORAGE_NAME)
+    cursor = conn.cursor()
+
     try:
         cursor.execute("""DELETE FROM queues""")
     except sqlite3.DatabaseError as err:
-        print(f"Error: {err}")
+        raise err
     else:
         conn.commit()
 
+    conn.close()
+
+
+def add_to_queue(chat_id: int, queue_id: int, new_member: int):
+    conn = sqlite3.connect(STORAGE_NAME)
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            """SELECT queue FROM queues
+            WHERE (chat_id = ? and queue_id = ?)
+            """,
+            (chat_id, queue_id)
+        )
+        
+        result = cursor.fetchone()[0]
+        updated_queue = ast.literal_eval(result)
+        updated_queue.append(new_member)
+
+        cursor.execute(
+            """UPDATE queues
+            SET queue = ?
+            WHERE (chat_id = ? and queue_id = ?)""",
+            (str(updated_queue), chat_id, queue_id)
+        )
+    except sqlite3.DatabaseError as err:
+        raise err
+    else:
+        conn.commit()
+
+    conn.close()
+
+def remove_from_queue(chat_id: int, queue_id: int, new_member: int):
+    conn = sqlite3.connect(STORAGE_NAME)
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            """SELECT queue FROM queues
+            WHERE (chat_id = ? and queue_id = ?)
+            """,
+            (chat_id, queue_id)
+        )
+        
+        result = cursor.fetchone()[0]
+        updated_queue = ast.literal_eval(result)
+        updated_queue.remove(new_member)
+
+        cursor.execute(
+            """UPDATE queues
+            SET queue = ?
+            WHERE (chat_id = ? and queue_id = ?)""",
+            (str(updated_queue), chat_id, queue_id)
+        )
+    except sqlite3.DatabaseError as err:
+        raise err
+    else:
+        conn.commit()
+
+    conn.close()
 
 if __name__ == "__main__":
-    conn = sqlite3.connect('bot_database.db')
+    conn = sqlite3.connect(STORAGE_NAME)
     cursor = conn.cursor()
 
     create_table_if_not_exists()
 
-    
     conn.close()
