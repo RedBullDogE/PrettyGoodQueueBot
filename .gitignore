@@ -4,3 +4,5 @@ Pipfile
 *.lock
 
 *.db
+
+config.py
