@@ -1,4 +1,6 @@
-.vscode/
+.vscode/*
 
 Pipfile
-Pipfile.lock
+*.lock
+
+*.db
