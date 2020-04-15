@@ -2,6 +2,7 @@ import sqlite3
 from config import STORAGE_NAME
 import ast
 
+
 class QueueNotFoundException(Exception):
     def __init__(self, *args):
         if args:
@@ -89,7 +90,7 @@ def user_exists_in_queue(chat_id: int, queue_id: int, user_id: int):
     conn.close()
 
 
-def insert(chat_id: int, queue_id: int, name: str, queue: list):
+def add_queue(chat_id: int, queue_id: int, name: str, queue: list):
     conn = sqlite3.connect(STORAGE_NAME)
     cursor = conn.cursor()
 
@@ -130,12 +131,15 @@ def get_queue(chat_id: int, queue_id: int):
     conn.close()
 
 
-def remove(name: str):
+def delete_queue(chat_id: int, name: str):
     conn = sqlite3.connect(STORAGE_NAME)
     cursor = conn.cursor()
 
     try:
-        cursor.execute("""DELETE FROM queues WHERE name = ?""", (name,))
+        cursor.execute(
+            """DELETE FROM queues 
+            WHERE (chat_id = ? and name = ?)""", (chat_id, name)
+        )
     except sqlite3.DatabaseError as err:
         raise err
     else:
@@ -169,7 +173,7 @@ def add_to_queue(chat_id: int, queue_id: int, new_member: int):
             """,
             (chat_id, queue_id)
         )
-        
+
         result = cursor.fetchone()[0]
         updated_queue = ast.literal_eval(result)
         updated_queue.append(new_member)
@@ -187,6 +191,7 @@ def add_to_queue(chat_id: int, queue_id: int, new_member: int):
 
     conn.close()
 
+
 def remove_from_queue(chat_id: int, queue_id: int, new_member: int):
     conn = sqlite3.connect(STORAGE_NAME)
     cursor = conn.cursor()
@@ -198,7 +203,7 @@ def remove_from_queue(chat_id: int, queue_id: int, new_member: int):
             """,
             (chat_id, queue_id)
         )
-        
+
         result = cursor.fetchone()[0]
         updated_queue = ast.literal_eval(result)
         updated_queue.remove(new_member)
@@ -215,6 +220,7 @@ def remove_from_queue(chat_id: int, queue_id: int, new_member: int):
         conn.commit()
 
     conn.close()
+
 
 if __name__ == "__main__":
     conn = sqlite3.connect(STORAGE_NAME)
