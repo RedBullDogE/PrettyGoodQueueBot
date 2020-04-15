@@ -75,7 +75,7 @@ def command_create(message):
     try:
         name = message.text.split()[1]
     except IndexError:
-        response_text = f"Sorry, but you should use command /start with name argument"
+        response_text = f"Sorry, but you should use command /create with name argument"
         bot.send_message(message.chat.id, response_text)
         return
 
@@ -87,7 +87,30 @@ def command_create(message):
     response_text = f"Queue: {name}\nNumber of members: 0\nMembers:\n"
     message_id = bot.send_message(message.chat.id, response_text,
                                   reply_markup=queue_markup()).message_id
+
     dbhelper.add_queue(message.chat.id, message_id, name, [])
+
+
+@bot.message_handler(commands=["delete"], func=lambda message: message.chat.type == "group")
+def command_delete(message):
+    try:
+        name = message.text.split()[1]
+    except IndexError:
+        response_text = f"Sorry, but you should use command /delete with name argument"
+        bot.send_message(message.chat.id, response_text)
+        return
+
+    if not dbhelper.name_exists_in_chat(name, message.chat.id):
+        response_text = f"Sorry, but the queue with the name '{name}' does not exist"
+        bot.send_message(message.chat.id, response_text)
+        return
+
+    queue_id = dbhelper.get_queue_id_by_name(message.chat.id, name)
+    dbhelper.delete_queue(message.chat.id, name)
+    bot.edit_message_reply_markup(message.chat.id, queue_id)
+
+    response_text = f"Queue '{name}' was successfully deleted"
+    bot.send_message(message.chat.id, response_text)
 
 
 @bot.callback_query_handler(func=lambda call: call.message.chat.type == "group")
@@ -117,7 +140,8 @@ def callback_query(call):
             )
             bot.answer_callback_query(call.id)
         else:
-            bot.answer_callback_query(call.id, "You are already in this queue!")
+            bot.answer_callback_query(
+                call.id, "You are already in this queue!")
     elif call.data == "cb_leave":
         try:
             is_queue_left = left_queue(
