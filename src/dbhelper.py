@@ -2,6 +2,19 @@ import sqlite3
 from config import STORAGE_NAME
 import ast
 
+class QueueNotFoundException(Exception):
+    def __init__(self, *args):
+        if args:
+            self.message = args[0]
+        else:
+            self.message = None
+
+    def __str__(self):
+        if self.message:
+            return f'QueueNotFoundException: {self.message}'
+        else:
+            return 'QueueNotFoundException has not been raised'
+
 
 def create_table_if_not_exists():
     try:
