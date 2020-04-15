@@ -24,6 +24,38 @@ def queue_markup():
     return markup
 
 
+def enter_queue(chat_id, queue_id, user_id):
+    if not dbhelper.queue_id_exists_in_chat(chat_id, queue_id):
+        raise dbhelper.QueueNotFoundException
+
+    if not dbhelper.user_exists_in_queue(chat_id, queue_id, user_id):
+        dbhelper.add_to_queue(chat_id, queue_id, user_id)
+        return True
+    else:
+        return False
+
+
+def left_queue(chat_id, queue_id, user_id):
+    if not dbhelper.queue_id_exists_in_chat(chat_id, queue_id):
+        raise dbhelper.QueueNotFoundException
+
+    if dbhelper.user_exists_in_queue(chat_id, queue_id, user_id):
+        dbhelper.remove_from_queue(chat_id, queue_id, user_id)
+        return True
+    else:
+        return False
+
+
+def queue_output(chat_id: int, queue: list):
+    def user_output(user):
+        return f"[{user.first_name} {user.last_name}](tg://user?id={user.id})"
+
+    user_list = [bot.get_chat_member(
+        chat_id, user_id).user for user_id in queue]
+
+    return '\n'.join([f"{pos[0]+1}. {user_output(pos[1])}" for pos in enumerate(user_list)])
+
+
 @bot.message_handler(commands=["start"], func=lambda message: message.chat.type == "private")
 def command_start_private_chat(message):
     bot.send_message(message.chat.id, "Hi! I can only work in groups. Please, add me to the group chat, that needs"
@@ -47,46 +79,67 @@ def command_create(message):
         bot.send_message(message.chat.id, response_text)
         return
 
-
     response_text = f"Queue: {name}\nNumber of members: 0\nMembers:\n"
     message_id = bot.send_message(message.chat.id, response_text,
-                     reply_markup=queue_markup()).message_id
+                                  reply_markup=queue_markup()).message_id
     dbhelper.insert(message.chat.id, message_id, name, [])
-
-
-def enter_queue(chat_id, queue_id, user_id):
-    if dbhelper.queue_id_exists_in_chat(chat_id, queue_id) and not dbhelper.user_exists_in_queue(chat_id, queue_id, user_id):
-        dbhelper.add_to_queue(chat_id, queue_id, user_id)
-        return True
-    else:
-        return False
-
-
-def left_queue(chat_id, queue_id, user_id):
-    if dbhelper.queue_id_exists_in_chat(chat_id, queue_id) and dbhelper.user_exists_in_queue(chat_id, queue_id, user_id):
-        dbhelper.remove_from_queue(chat_id, queue_id, user_id)
-        return True
-    else:
-        return False
 
 
 @bot.callback_query_handler(func=lambda call: call.message.chat.type == "group")
 def callback_query(call):
     if call.data == "cb_enter":
-        if enter_queue(call.message.chat.id, call.message.message_id, call.message.from_user.id):
-            name, queue = dbhelper.get_queue(call.message.chat.id, call.message.message_id)
-            edited_text = f"Queue: {name}\nNumber of members: {len(queue)}\nMembers: {queue}"
-            bot.edit_message_text(edited_text, call.message.chat.id, call.message.message_id, reply_markup=queue_markup())
-            # bot.answer_callback_query(call.id, 'Done!')
+        try:
+            is_queue_entered = enter_queue(
+                call.message.chat.id, call.message.message_id, call.from_user.id)
+        except dbhelper.QueueNotFoundException:
+            bot.answer_callback_query(
+                call.id, "Queue does not exist! Please contact your chat administrator!")
+            return
+
+        if is_queue_entered:
+            name, queue = dbhelper.get_queue(
+                call.message.chat.id,
+                call.message.message_id
+            )
+
+            edited_text = f"Queue: {name}\nNumber of members: {len(queue)}\nMembers:\n{queue_output(call.message.chat.id, queue)}"
+            bot.edit_message_text(
+                edited_text,
+                call.message.chat.id,
+                call.message.message_id,
+                reply_markup=queue_markup(),
+                parse_mode="markdown"
+            )
+            bot.answer_callback_query(call.id)
         else:
-            bot.answer_callback_query(call.id, "User is already in the queue!")
+            bot.answer_callback_query(call.id, "You are already in this queue!")
     elif call.data == "cb_leave":
-        if left_queue(call.message.chat.id, call.message.message_id, call.message.from_user.id):
-            name, queue = dbhelper.get_queue(call.message.chat.id, call.message.message_id)
-            edited_text = f"Queue: {name}\nNumber of members: {len(queue)}\nMembers: {queue}"
-            bot.edit_message_text(edited_text, call.message.chat.id, call.message.message_id, reply_markup=queue_markup())
+        try:
+            is_queue_left = left_queue(
+                call.message.chat.id, call.message.message_id, call.from_user.id)
+        except dbhelper.QueueNotFoundException:
+            bot.answer_callback_query(
+                call.id, "Queue does not exist! Please contact your chat administrator!")
+            return
+
+        if is_queue_left:
+            name, queue = dbhelper.get_queue(
+                call.message.chat.id,
+                call.message.message_id
+            )
+
+            edited_text = f"Queue: {name}\nNumber of members: {len(queue)}\nMembers:\n{queue_output(call.message.chat.id, queue)}"
+            bot.edit_message_text(
+                edited_text,
+                call.message.chat.id,
+                call.message.message_id,
+                reply_markup=queue_markup(),
+                parse_mode="markdown"
+            )
+            bot.answer_callback_query(call.id)
         else:
-            bot.answer_callback_query(call.id, "User in not in this queue yet!")
+            bot.answer_callback_query(
+                call.id, "You are not in this queue yet!")
     else:
         bot.answer_callback_query(call.id, "Something went wrong...")
 
