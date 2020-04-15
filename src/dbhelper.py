@@ -130,6 +130,28 @@ def get_queue(chat_id: int, queue_id: int):
 
     conn.close()
 
+def get_queue_id_by_name(chat_id: int, name: str):
+    conn = sqlite3.connect(STORAGE_NAME)
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            """SELECT queue_id FROM queues
+            WHERE (chat_id = ? and name = ?)
+            """,
+            (chat_id, name)
+        )
+
+        result = int(cursor.fetchone()[0])
+
+        return result
+    except sqlite3.DatabaseError as err:
+        raise err
+    else:
+        conn.commit()
+
+    conn.close()
+
 
 def delete_queue(chat_id: int, name: str):
     conn = sqlite3.connect(STORAGE_NAME)
