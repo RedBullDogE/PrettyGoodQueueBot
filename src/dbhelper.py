@@ -23,7 +23,7 @@ def create_table_if_not_exists():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             chat_id INTEGER,
             queue_id INTEGER,
-            name VARCHAR(100),
+            name VARCHAR(100) COLLATE NOCASE,
             queue TEXT
         )""")
     except sqlite3.DatabaseError as err:
@@ -39,6 +39,7 @@ def name_exists_in_chat(name: str, chat_id: int):
     try:
         cursor.execute("""SELECT * FROM queues
             WHERE (name = ? and chat_id = ?)
+            COLLATE NOCASE
         """, (name, chat_id))
 
         result = cursor.fetchone()
