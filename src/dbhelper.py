@@ -69,6 +69,24 @@ def queue_id_exists_in_chat(chat_id: int, queue_id: int):
     conn.close()
 
 
+def count_queue_in_chat(chat_id: int):
+    conn = sqlite3.connect(STORAGE_NAME)
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""SELECT COUNT(*) FROM queues
+            WHERE (chat_id = ?)
+        """, (chat_id,))
+
+        result = cursor.fetchone()[0]
+
+        return result
+    except sqlite3.DatabaseError as err:
+        raise err
+
+    conn.close()
+
+
 def user_exists_in_queue(chat_id: int, queue_id: int, user_id: int):
     conn = sqlite3.connect(STORAGE_NAME)
     cursor = conn.cursor()

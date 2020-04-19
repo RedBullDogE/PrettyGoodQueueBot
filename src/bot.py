@@ -72,10 +72,15 @@ def command_start(message):
 
 @bot.message_handler(commands=["create"], func=lambda message: message.chat.type == "group")
 def command_create(message):
-    command_split = message.text.split()
+    command_split = message.text.split(maxsplit=1)
 
     if len(command_split) != 2:
-        response_text = "You should use the 'create' command correctly:\n/create QUEUE_NAME"
+        response_text = "You should use the 'create' command correctly:\n\t/create QUEUE_NAME"
+        bot.send_message(message.chat.id, response_text)
+        return
+
+    if dbhelper.count_queue_in_chat(message.chat.id) > 5:
+        response_text = "Chat queue limit reached! Please, delete unnecessary queues or use existing ones"
         bot.send_message(message.chat.id, response_text)
         return
 
@@ -95,15 +100,15 @@ def command_create(message):
 
 @bot.message_handler(commands=["delete"], func=lambda message: message.chat.type == "group")
 def command_delete(message):
-    command_split = message.text.split()
+    command_split = message.text.split(maxsplit=1)
     
     if len(command_split) != 2:
-        response_text = f"Sorry, but you should use command /delete with name argument"
+        response_text = f"You should use the 'delete' command correctly:\n\t/delete QUEUE_NAME"
         bot.send_message(message.chat.id, response_text)
         return
 
     name = command_split[1]
-    
+
     if not dbhelper.name_exists_in_chat(name, message.chat.id):
         response_text = f"Sorry, but the queue with the name '{name}' does not exist"
         bot.send_message(message.chat.id, response_text)
