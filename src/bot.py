@@ -72,12 +72,14 @@ def command_start(message):
 
 @bot.message_handler(commands=["create"], func=lambda message: message.chat.type == "group")
 def command_create(message):
-    try:
-        name = message.text.split()[1]
-    except IndexError:
-        response_text = f"Sorry, but you should use command /create with name argument"
+    command_split = message.text.split()
+
+    if len(command_split) != 2:
+        response_text = "You should use the 'create' command correctly:\n/create QUEUE_NAME"
         bot.send_message(message.chat.id, response_text)
         return
+
+    name = command_split[1]
 
     if dbhelper.name_exists_in_chat(name, message.chat.id):
         response_text = f'Sorry, but the queue with the name "{name}" already exists'
