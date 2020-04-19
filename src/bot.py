@@ -95,13 +95,15 @@ def command_create(message):
 
 @bot.message_handler(commands=["delete"], func=lambda message: message.chat.type == "group")
 def command_delete(message):
-    try:
-        name = message.text.split()[1]
-    except IndexError:
+    command_split = message.text.split()
+    
+    if len(command_split) != 2:
         response_text = f"Sorry, but you should use command /delete with name argument"
         bot.send_message(message.chat.id, response_text)
         return
 
+    name = command_split[1]
+    
     if not dbhelper.name_exists_in_chat(name, message.chat.id):
         response_text = f"Sorry, but the queue with the name '{name}' does not exist"
         bot.send_message(message.chat.id, response_text)
