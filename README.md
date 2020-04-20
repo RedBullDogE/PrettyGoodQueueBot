@@ -12,6 +12,8 @@ QueueBot can be used only in group chats (for obvious reasons) and supports a fe
 | /create QUEUE_NAME | Create a new queue with specified name if it doesn't exist. Queue name is case insensitive |
 | /delete QUEUE_NAME | Delete a queue if it exists. When using this command the bot just removes the possibility to enter/leave specified queue. The last state before removing queue is frozen FOREVER (until someone deletes this message). Queue nam is case insensitive |
 
+When the queue is created, each chat participant can enter and leave this queue by clicking the appropriate button. All chat members can take only one place in each queue. Leaving the chat does not affect queues.
+
 ### COMMANDS TODO
 | command | Description |
 | ------- | ----------- |
@@ -20,4 +22,4 @@ QueueBot can be used only in group chats (for obvious reasons) and supports a fe
 | /delete_all | Delete all queues in the chat |
 | /kick QUEUE_NAME PLACE | Kick user from specified position |
 
-When the queue is created, each chat participant can enter and leave this queue by clicking the appropriate button. All chat members can take only one place in each queue. Leaving the chat does not affect queues.
+
