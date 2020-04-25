@@ -272,5 +272,28 @@ def remove_from_queue(chat_id: int, queue_id: int, new_member: int) -> None:
     conn.close()
 
 
+def get_queue_names(chat_id: int):
+    conn = sqlite3.connect(STORAGE_NAME)
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            """SELECT name FROM queues
+            WHERE chat_id = ?
+            """,
+            (chat_id,)
+        )
+        result = list(map(lambda el: el[0], cursor.fetchall()))
+
+        return result
+    except sqlite3.DatabaseError as err:
+        raise err
+    else:
+        conn.commit()
+
+    conn.close()
+
+
+
 if __name__ == "__main__":
     create_table_if_not_exists()

@@ -55,7 +55,7 @@ def queue_output(chat_id: int, queue: list) -> str:
     user_list = [bot.get_chat_member(
         chat_id, user_id).user for user_id in queue]
 
-    return '\n'.join([f"{pos[0]+1}. {user_output(pos[1])}" for pos in enumerate(user_list)])
+    return '\n'.join([f"{pos[0]}. {user_output(pos[1])}" for pos in enumerate(user_list, start=1)])
 
 
 @bot.message_handler(commands=["start"], func=lambda message: message.chat.type == "private")
@@ -85,14 +85,15 @@ def command_create(message):
         return
 
     if dbhelper.count_queue_in_chat(message.chat.id) > 5:
-        response_text = "Chat queue limit reached!😩 Please, delete unnecessary queues or use existing ones"
+        response_text = "Chat queue limit reached!😩" \
+            "\nPlease, delete unnecessary queues or use existing ones"
         bot.send_message(message.chat.id, response_text)
         return
 
     name = command_split[1]
 
     if dbhelper.name_exists_in_chat(name, message.chat.id):
-        response_text = f'Sorry, but the queue with the name "{name}" already exists😰'
+        response_text = f"Sorry, but the queue with the name '{name}' already exists😰"
         bot.send_message(message.chat.id, response_text)
         return
 
@@ -103,12 +104,14 @@ def command_create(message):
     dbhelper.add_queue(message.chat.id, message_id, name, [])
 
 
-@bot.message_handler(commands=["delete"], func=lambda message: message.chat.type == "group")
+@bot.message_handler(commands=["delete", "remove"], func=lambda message: message.chat.type == "group")
 def command_delete(message):
     command_split = message.text.split(maxsplit=1)
 
     if len(command_split) != 2:
-        response_text = f"You should use the 'delete' command correctly😓:\n\t/delete QUEUE_NAME"
+        response_text = f"You should use the '{command_split[0][1:]}' command correctly😓:" \
+            f"\n\t{command_split[0]} QUEUE_NAME"
+
         bot.send_message(message.chat.id, response_text)
         return
 
@@ -125,6 +128,24 @@ def command_delete(message):
 
     response_text = f"Queue '{name}' was successfully deleted😋"
     bot.send_message(message.chat.id, response_text)
+
+
+@bot.message_handler(commands=["list"], func=lambda message: message.chat.type == "group")
+def command_list(message):
+    queue_list = dbhelper.get_queue_names(message.chat.id)
+
+    if queue_list:
+        queues = "\n\t".join(
+            [f"{el[0]}. {el[1]}" for el in enumerate(queue_list, start=1)])
+
+        response_text = "All available queues in your chat:" \
+            f"\n\t{queues}" \
+            f"\nFullness: {len(queue_list)}/6"
+
+        bot.send_message(message.chat.id, response_text)
+    else:
+        response_text = "There are no queues in this chat yet! Maybe let's create?😏"
+        bot.send_message(message.chat.id, response_text + queues)
 
 
 @bot.callback_query_handler(func=lambda call: call.message.chat.type == "group")
