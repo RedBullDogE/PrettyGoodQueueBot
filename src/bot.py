@@ -2,9 +2,12 @@ import logging
 
 import telebot
 from telebot import types
+import flask
+
+import time
 
 import dbhelper
-from config import API_TOKEN
+import config
 
 bot = telebot.TeleBot(API_TOKEN)
 
@@ -186,3 +189,31 @@ def callback_query(call):
 
 if __name__ == "__main__":
     bot.infinity_polling()
+
+app = flask.Flask(__name__)
+
+
+# Process webhook calls
+@app.route(config.WEBHOOK_URL_PATH, methods=['POST'])
+def webhook():
+    # r = flask.request.get(WEBHOOK_URL_PATH)
+    # print(r)
+    if flask.request.headers.get('content-type') == 'application/json':
+        json_string = flask.request.get_data().decode('utf-8')
+        update = telebot.types.Update.de_json(json_string)
+        bot.process_new_updates([update])
+        return ''
+    else:
+        flask.abort(403)
+
+
+if __name__ == "__main__":
+    bot.remove_webhook()
+    # Delay for correct webhook setting
+    time.sleep(1)
+
+    bot.set_webhook(url=config.WEBHOOK_URL_BASE + config.WEBHOOK_URL_PATH)
+
+    app.run(host=config.WEBHOOK_LISTEN,
+            port=config.WEBHOOK_PORT,
+            debug=True)
