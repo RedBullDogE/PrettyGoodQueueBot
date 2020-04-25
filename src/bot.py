@@ -57,7 +57,7 @@ def queue_output(chat_id: int, queue: list) -> str:
     return '\n'.join([f"{pos[0]}. {user_output(pos[1])}" for pos in enumerate(user_list, start=1)])
 
 
-@bot.message_handler(commands=["start"], func=lambda message: message.chat.type == "private")
+@bot.message_handler(commands=["start", "help"], func=lambda message: message.chat.type == "private")
 def command_start_private_chat(message):
     response_text = "Hi! I can only work in groups." \
         "\nPlease, add me to the group chat, that needs a hero of queues😎"
@@ -70,6 +70,20 @@ def command_start(message):
     response_text = "Hi! I can create queues! Let's try to do this!🤗" \
         "\nType /create QUEUE_NAME to create a new queue" \
         "\nUse /help to view all available commands!"
+
+    bot.send_message(message.chat.id, response_text)
+
+
+@bot.message_handler(commands=["help"], func=lambda message: message.chat.type == "group")
+def command_start(message):
+    response_text = "List of available commands 🧐:" \
+        "\n\n▪️ /create QUEUE_NAME — create a new queue" \
+        "\n▪️ /delete or /remove QUEUE_NAME — stop (delete) specified queue" \
+        "\n▪️ /list — display all working queues of your chat" \
+        "\n▪️ /find QUEUE_NAME — find existing queue" \
+        "\n\nIn this chat you can carry out 6 queues at the same time. " \
+        "To check the total number of queues use the /list command." \
+        "\n\nAlso, if you find a bug or you have some questions write here: @redbulldog"
 
     bot.send_message(message.chat.id, response_text)
 
@@ -157,7 +171,7 @@ def command_list(message):
 
         bot.send_message(message.chat.id, response_text)
         return
-    
+
     name = command_split[1]
 
     if not dbhelper.name_exists_in_chat(name, message.chat.id):
@@ -167,7 +181,7 @@ def command_list(message):
 
     message_id = dbhelper.get_queue_id_by_name(message.chat.id, name)
     message.message_id = message_id
-    
+
     response_text = "I found!😇"
     bot.reply_to(message, response_text)
 
