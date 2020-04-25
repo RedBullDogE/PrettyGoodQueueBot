@@ -148,6 +148,7 @@ def command_list(message):
         bot.send_message(message.chat.id, response_text + queues)
 
 
+# TODO: BUG - sending message exception if it parses markdown with underlines -> _
 @bot.callback_query_handler(func=lambda call: call.message.chat.type == "group")
 def callback_query(call):
     call_id = call.id
