@@ -249,32 +249,33 @@ def callback_query(call):
 
 
 if __name__ == "__main__":
-    bot.infinity_polling()
-
-app = flask.Flask(__name__)
-
-
-# Process webhook calls
-@app.route(config.WEBHOOK_URL_PATH, methods=['POST'])
-def webhook():
-    # r = flask.request.get(WEBHOOK_URL_PATH)
-    # print(r)
-    if flask.request.headers.get('content-type') == 'application/json':
-        json_string = flask.request.get_data().decode('utf-8')
-        update = telebot.types.Update.de_json(json_string)
-        bot.process_new_updates([update])
-        return ''
+    if DEBUG_WITH_POLLING:
+        bot.remove_webhook()
+        bot.infinity_polling()
     else:
-        flask.abort(403)
+        app = flask.Flask(__name__)
 
 
-if __name__ == "__main__":
-    bot.remove_webhook()
-    # Delay for correct webhook setting
-    time.sleep(1)
+        # Process webhook calls
+        @app.route(config.WEBHOOK_URL_PATH, methods=['POST'])
+        def webhook():
+            # r = flask.request.get(WEBHOOK_URL_PATH)
+            # print(r)
+            if flask.request.headers.get('content-type') == 'application/json':
+                json_string = flask.request.get_data().decode('utf-8')
+                update = telebot.types.Update.de_json(json_string)
+                bot.process_new_updates([update])
+                return ''
+            else:
+                flask.abort(403)
 
-    bot.set_webhook(url=config.WEBHOOK_URL_BASE + config.WEBHOOK_URL_PATH)
+        bot.remove_webhook()
+        # Delay for correct webhook setting
+        time.sleep(1)
 
-    app.run(host=config.WEBHOOK_LISTEN,
-            port=config.WEBHOOK_PORT,
-            debug=True)
+        r = bot.set_webhook(url=config.WEBHOOK_URL_BASE + config.WEBHOOK_URL_PATH)
+        print(r)
+
+        app.run(host=config.WEBHOOK_LISTEN,
+                port=config.WEBHOOK_PORT,
+                debug=True)
