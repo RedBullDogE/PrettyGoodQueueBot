@@ -272,7 +272,7 @@ def remove_from_queue(chat_id: int, queue_id: int, new_member: int) -> None:
     conn.close()
 
 
-def get_queue_names(chat_id: int):
+def get_all_queue_names(chat_id: int):
     conn = sqlite3.connect(STORAGE_NAME)
     cursor = conn.cursor()
 

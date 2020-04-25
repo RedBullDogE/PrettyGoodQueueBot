@@ -9,7 +9,6 @@ import time
 import dbhelper
 import config
 
-bot = telebot.TeleBot(API_TOKEN)
 
 bot = telebot.TeleBot(config.API_TOKEN)
 
@@ -132,7 +131,7 @@ def command_delete(message):
 
 @bot.message_handler(commands=["list"], func=lambda message: message.chat.type == "group")
 def command_list(message):
-    queue_list = dbhelper.get_queue_names(message.chat.id)
+    queue_list = dbhelper.get_all_queue_names(message.chat.id)
 
     if queue_list:
         queues = "\n\t".join(
@@ -145,7 +144,32 @@ def command_list(message):
         bot.send_message(message.chat.id, response_text)
     else:
         response_text = "There are no queues in this chat yet! Maybe let's create?😏"
-        bot.send_message(message.chat.id, response_text + queues)
+        bot.send_message(message.chat.id, response_text)
+
+
+@bot.message_handler(commands=["find"], func=lambda message: message.chat.type == "group")
+def command_list(message):
+    command_split = message.text.split(maxsplit=1)
+
+    if len(command_split) != 2:
+        response_text = f"You should use the 'find' command correctly😓:" \
+            f"\n\t/find QUEUE_NAME"
+
+        bot.send_message(message.chat.id, response_text)
+        return
+    
+    name = command_split[1]
+
+    if not dbhelper.name_exists_in_chat(name, message.chat.id):
+        response_text = f"Sorry, but the queue with the name '{name}' does not exist☹️"
+        bot.send_message(message.chat.id, response_text)
+        return
+
+    message_id = dbhelper.get_queue_id_by_name(message.chat.id, name)
+    message.message_id = message_id
+    
+    response_text = "I found!😇"
+    bot.reply_to(message, response_text)
 
 
 # TODO: BUG - sending message exception if it parses markdown with underlines -> _
