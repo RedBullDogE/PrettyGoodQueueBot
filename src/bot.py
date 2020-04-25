@@ -87,8 +87,8 @@ def command_start(message):
 @bot.message_handler(commands=["help"], func=lambda message: message.chat.type == "group")
 def command_start(message):
     response_text = "List of available commands 🧐:" \
-        "\n\n▪️ /create QUEUE_NAME — create a new queue" \
-        "\n▪️ /delete or /remove QUEUE_NAME — stop (delete) specified queue" \
+        "\n\n▪️ /create QUEUE_NAME — create a new queue, ONLY FOR ADMINS" \
+        "\n▪️ /delete or /remove QUEUE_NAME — stop (delete) specified queue, ONLY FOR ADMINS" \
         "\n▪️ /list — display all working queues of your chat" \
         "\n▪️ /find QUEUE_NAME — find existing queue" \
         "\n\nIn this chat you can carry out 6 queues at the same time. " \
