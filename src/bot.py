@@ -12,6 +12,8 @@ import config
 
 bot = telebot.TeleBot(config.API_TOKEN)
 
+DEBUG_WITH_POLLING = True
+
 
 def queue_markup():
     markup = types.InlineKeyboardMarkup()
@@ -57,6 +59,14 @@ def queue_output(chat_id: int, queue: list) -> str:
     return '\n'.join([f"{pos[0]}. {user_output(pos[1])}" for pos in enumerate(user_list, start=1)])
 
 
+def is_admin(chat_id: int, user_id: int):
+    admins = list(map(lambda member: member.user.id,
+                      bot.get_chat_administrators(chat_id)))
+    member = bot.get_chat_member(chat_id, user_id).user.id
+
+    return member in admins
+
+
 @bot.message_handler(commands=["start", "help"], func=lambda message: message.chat.type == "private")
 def command_start_private_chat(message):
     response_text = "Hi! I can only work in groups." \
@@ -88,7 +98,11 @@ def command_start(message):
     bot.send_message(message.chat.id, response_text)
 
 
-@bot.message_handler(commands=["create"], func=lambda message: message.chat.type == "group")
+@bot.message_handler(
+    commands=["create"],
+    func=lambda message: message.chat.type == "group" and
+    is_admin(message.chat.id, message.from_user.id)
+)
 def command_create(message):
     command_split = message.text.split(maxsplit=1)
 
@@ -117,7 +131,11 @@ def command_create(message):
     dbhelper.add_queue(message.chat.id, message_id, name, [])
 
 
-@bot.message_handler(commands=["delete", "remove"], func=lambda message: message.chat.type == "group")
+@bot.message_handler(
+    commands=["delete", "remove"],
+    func=lambda message: message.chat.type == "group" and
+    is_admin(message.chat.id, message.from_user.id)
+)
 def command_delete(message):
     command_split = message.text.split(maxsplit=1)
 
@@ -254,7 +272,6 @@ if __name__ == "__main__":
         bot.infinity_polling()
     else:
         app = flask.Flask(__name__)
-
 
         # Process webhook calls
         @app.route(config.WEBHOOK_URL_PATH, methods=['POST'])
