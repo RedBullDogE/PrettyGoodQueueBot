@@ -1,4 +1,4 @@
-import logging
+# -*- coding: utf-8 -*-
 
 import telebot
 from telebot import types
@@ -11,8 +11,7 @@ import config
 
 bot = telebot.TeleBot(API_TOKEN)
 
-# DEBUG
-# telebot.logger.setLevel(logging.DEBUG)
+bot = telebot.TeleBot(config.API_TOKEN)
 
 
 def queue_markup():
@@ -61,17 +60,19 @@ def queue_output(chat_id: int, queue: list) -> str:
 
 @bot.message_handler(commands=["start"], func=lambda message: message.chat.type == "private")
 def command_start_private_chat(message):
-    response_text = "Hi! I can only work in groups. Please, add me to the group chat, that needs"
-    " a hero of queues!"
+    response_text = "Hi! I can only work in groups." \
+        "\nPlease, add me to the group chat, that needs a hero of queues😎"
+
     bot.send_message(message.chat.id, response_text)
 
 
 @bot.message_handler(commands=["start"], func=lambda message: message.chat.type == "group")
 def command_start(message):
-    bot.send_message(
-        message.chat.id,
-        "Hi! I can create queues!"
-    )
+    response_text = "Hi! I can create queues! Let's try to do this!🤗" \
+        "\nType /create QUEUE_NAME to create a new queue" \
+        "\nUse /help to view all available commands!"
+
+    bot.send_message(message.chat.id, response_text)
 
 
 @bot.message_handler(commands=["create"], func=lambda message: message.chat.type == "group")
@@ -79,19 +80,19 @@ def command_create(message):
     command_split = message.text.split(maxsplit=1)
 
     if len(command_split) != 2:
-        response_text = "You should use the 'create' command correctly:\n\t/create QUEUE_NAME"
+        response_text = "You should use the 'create' command correctly😓:\n\t/create QUEUE_NAME"
         bot.send_message(message.chat.id, response_text)
         return
 
     if dbhelper.count_queue_in_chat(message.chat.id) > 5:
-        response_text = "Chat queue limit reached! Please, delete unnecessary queues or use existing ones"
+        response_text = "Chat queue limit reached!😩 Please, delete unnecessary queues or use existing ones"
         bot.send_message(message.chat.id, response_text)
         return
 
     name = command_split[1]
 
     if dbhelper.name_exists_in_chat(name, message.chat.id):
-        response_text = f'Sorry, but the queue with the name "{name}" already exists'
+        response_text = f'Sorry, but the queue with the name "{name}" already exists😰'
         bot.send_message(message.chat.id, response_text)
         return
 
@@ -107,14 +108,14 @@ def command_delete(message):
     command_split = message.text.split(maxsplit=1)
 
     if len(command_split) != 2:
-        response_text = f"You should use the 'delete' command correctly:\n\t/delete QUEUE_NAME"
+        response_text = f"You should use the 'delete' command correctly😓:\n\t/delete QUEUE_NAME"
         bot.send_message(message.chat.id, response_text)
         return
 
     name = command_split[1]
 
     if not dbhelper.name_exists_in_chat(name, message.chat.id):
-        response_text = f"Sorry, but the queue with the name '{name}' does not exist"
+        response_text = f"Sorry, but the queue with the name '{name}' does not exist☹️"
         bot.send_message(message.chat.id, response_text)
         return
 
@@ -122,7 +123,7 @@ def command_delete(message):
     dbhelper.delete_queue(message.chat.id, name)
     bot.edit_message_reply_markup(message.chat.id, queue_id)
 
-    response_text = f"Queue '{name}' was successfully deleted"
+    response_text = f"Queue '{name}' was successfully deleted😋"
     bot.send_message(message.chat.id, response_text)
 
 
@@ -138,7 +139,7 @@ def callback_query(call):
             is_queue_entered = enter_queue(chat_id, queue_id, user_id)
         except dbhelper.QueueNotFoundException:
             bot.answer_callback_query(
-                call_id, "Queue does not exist! Please contact your chat administrator!")
+                call_id, "Queue does not exist!🥴🥴🥴 Please contact your chat administrator!")
             return
 
         if is_queue_entered:
@@ -164,7 +165,7 @@ def callback_query(call):
         except dbhelper.QueueNotFoundException:
             bot.answer_callback_query(
                 call_id,
-                "Queue does not exist! Please contact your chat administrator!"
+                "Queue does not exist!🥴🥴🥴 Please contact your chat administrator!"
             )
             return
 
