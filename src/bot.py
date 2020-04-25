@@ -189,7 +189,7 @@ def command_list(message):
 
         bot.send_message(message.chat.id, response_text)
         return
-
+        
     name = command_split[1]
 
     if not dbhelper.name_exists_in_chat(name, message.chat.id):
