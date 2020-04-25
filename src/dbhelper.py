@@ -18,6 +18,9 @@ class QueueNotFoundException(Exception):
 
 
 def create_table_if_not_exists() -> None:
+    conn = sqlite3.connect(STORAGE_NAME)
+    cursor = conn.cursor()
+
     try:
         cursor.execute(
             """CREATE TABLE IF NOT EXISTS queues (
@@ -31,6 +34,8 @@ def create_table_if_not_exists() -> None:
         raise err
     else:
         conn.commit()
+
+    conn.close()
 
 
 def name_exists_in_chat(name: str, chat_id: int) -> bool:
@@ -268,9 +273,4 @@ def remove_from_queue(chat_id: int, queue_id: int, new_member: int) -> None:
 
 
 if __name__ == "__main__":
-    conn = sqlite3.connect(STORAGE_NAME)
-    cursor = conn.cursor()
-
     create_table_if_not_exists()
-
-    conn.close()
