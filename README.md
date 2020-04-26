@@ -2,6 +2,10 @@
 
 Bot written with PyTelegramBotAPI and used to create simple small queues for some local events.
 
+## *Table of contents*
+
+***TODO***
+
 ## Usage
 
 QueueBot can be used only in group chats (for obvious reasons) and supports a few commands:
