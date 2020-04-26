@@ -14,7 +14,7 @@ class QueueNotFoundException(Exception):
         if self.message:
             return f'QueueNotFoundException: {self.message}'
         else:
-            return 'QueueNotFoundException has not been raised'
+            return 'QueueNotFoundException has been raised'
 
 
 def create_table_if_not_exists() -> None:
@@ -50,12 +50,11 @@ def name_exists_in_chat(name: str, chat_id: int) -> bool:
             (name, chat_id))
 
         result = cursor.fetchone()
-
-        return bool(result)
     except sqlite3.DatabaseError as err:
         raise err
 
     conn.close()
+    return bool(result)
 
 
 def queue_id_exists_in_chat(chat_id: int, queue_id: int) -> bool:
@@ -69,12 +68,11 @@ def queue_id_exists_in_chat(chat_id: int, queue_id: int) -> bool:
             (queue_id, chat_id))
 
         result = cursor.fetchone()
-
-        return bool(result)
     except sqlite3.DatabaseError as err:
         raise err
 
     conn.close()
+    return bool(result)
 
 
 def user_exists_in_queue(chat_id: int, queue_id: int, user_id: int) -> bool:
@@ -91,11 +89,11 @@ def user_exists_in_queue(chat_id: int, queue_id: int, user_id: int) -> bool:
         result = cursor.fetchone()[0]
         queue = ast.literal_eval(result)
 
-        return user_id in queue
     except sqlite3.DatabaseError as err:
         raise err
 
     conn.close()
+    return user_id in queue
 
 
 def count_queue_in_chat(chat_id: int) -> int:
@@ -110,11 +108,11 @@ def count_queue_in_chat(chat_id: int) -> int:
 
         result = cursor.fetchone()[0]
 
-        return result
     except sqlite3.DatabaseError as err:
         raise err
 
     conn.close()
+    return result
 
 
 def add_queue(chat_id: int, queue_id: int, name: str, queue: list) -> None:
@@ -149,13 +147,12 @@ def get_queue(chat_id: int, queue_id: int) -> list:
         result = list(cursor.fetchone())
         result[1] = ast.literal_eval(result[1])
 
-        return result
     except sqlite3.DatabaseError as err:
         raise err
-    else:
-        conn.commit()
 
     conn.close()
+    return result
+
 
 
 def get_queue_id_by_name(chat_id: int, name: str) -> int:
@@ -170,14 +167,12 @@ def get_queue_id_by_name(chat_id: int, name: str) -> int:
         )
 
         result = int(cursor.fetchone()[0])
-
-        return result
     except sqlite3.DatabaseError as err:
         raise err
-    else:
-        conn.commit()
 
     conn.close()
+    return result
+
 
 
 def delete_queue(chat_id: int, name: str) -> None:
@@ -196,6 +191,34 @@ def delete_queue(chat_id: int, name: str) -> None:
         conn.commit()
 
     conn.close()
+
+
+def delete_all_queues(chat_id: int) -> list:
+    conn = sqlite3.connect(STORAGE_NAME)
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            """SELECT chat_id FROM queues
+            WHERE (chat_id = ?)
+            """,
+            (chat_id,)
+        )
+        result = list(map(lambda el: el[0], cursor.fetchall()))
+
+        cursor.execute(
+            """DELETE FROM queues 
+            WHERE (chat_id = ?)""",
+            (chat_id,)
+        )
+    except sqlite3.DatabaseError as err:
+        raise err
+    else:
+        conn.commit()
+
+    conn.close()
+    return result
+
 
 
 def clean_table() -> None:
@@ -284,14 +307,13 @@ def get_all_queue_names(chat_id: int):
             (chat_id,)
         )
         result = list(map(lambda el: el[0], cursor.fetchall()))
-
-        return result
     except sqlite3.DatabaseError as err:
         raise err
     else:
         conn.commit()
 
     conn.close()
+    return result
 
 
 
