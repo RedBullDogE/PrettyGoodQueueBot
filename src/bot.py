@@ -59,7 +59,7 @@ def queue_output(chat_id: int, queue: list) -> str:
     return '\n'.join([f"{pos[0]}. {user_output(pos[1])}" for pos in enumerate(user_list, start=1)])
 
 
-def is_admin(chat_id: int, user_id: int):
+def is_admin(chat_id: int, user_id: int) -> bool:
     admins = list(map(lambda member: member.user.id,
                       bot.get_chat_administrators(chat_id)))
     member = bot.get_chat_member(chat_id, user_id).user.id
@@ -78,8 +78,8 @@ def command_start_private_chat(message):
 @bot.message_handler(commands=["start"], func=lambda message: message.chat.type == "group")
 def command_start(message):
     response_text = "Hi! I can create queues! Let's try to do this!🤗" \
-        "\nType /create QUEUE_NAME to create a new queue" \
-        "\nUse /help to view all available commands!"
+        "\nType /create QUEUE_NAME to create a new queue or " \
+        "use /help to view all available commands!"
 
     bot.send_message(message.chat.id, response_text)
 
@@ -90,7 +90,7 @@ def command_start(message):
         "\n\n▪️ /create QUEUE_NAME — create a new queue, ONLY FOR ADMINS" \
         "\n▪️ /delete or /remove QUEUE_NAME — stop (delete) specified queue, ONLY FOR ADMINS" \
         "\n▪️ /list — display all working queues of your chat" \
-        "\n▪️ /find QUEUE_NAME — find existing queue" \
+        "\n▪️ /find QUEUE_NAME — find existing queue in chat (if you lost it)" \
         "\n\nIn this chat you can carry out 6 queues at the same time. " \
         "To check the total number of queues use the /list command." \
         "\n\nAlso, if you find a bug or you have some questions write here: @redbulldog"
@@ -161,6 +161,40 @@ def command_delete(message):
     bot.send_message(message.chat.id, response_text)
 
 
+@bot.message_handler(
+    commands=["deleteall", "removeall"],
+    func=lambda message: message.chat.type == "group" and
+    is_admin(message.chat.id, message.from_user.id)
+)
+def command_deleteall(message):
+
+    response_text = "Are you sure you want to delete all queues in this group? Yes/No"
+    msg = bot.reply_to(message, response_text)
+    bot.register_next_step_handler(msg, deleteall_queues)
+
+
+def deleteall_queues(message):
+    try:
+        if message.text.lower().strip() in ["yes", "y", "ye"]:
+            queue_id_list = dbhelper.delete_all_queues(message.chat.id)
+            for qid in queue_id_list:
+                bot.edit_message_reply_markup(message.chat.id, qid)
+
+            response_text = "All queues was successfully deleted💀💀💀"
+            bot.send_message(message.chat.id, response_text)
+        elif message.text.lower().strip() in ["no", "n"]:
+            response_text = "Well, finish it😐"
+            bot.send_message(message.chat.id, response_text)
+        else:
+            response_text = "I don't understand😰 Please, answer YES or NO😣"
+            msg = bot.reply_to(message, response_text)
+            bot.register_next_step_handler(msg, deleteall_queues)
+
+    except Exception as e:
+        print(e.__traceback__)
+        bot.reply_to(message, "Oooops")
+
+
 @bot.message_handler(commands=["list"], func=lambda message: message.chat.type == "group")
 def command_list(message):
     queue_list = dbhelper.get_all_queue_names(message.chat.id)
@@ -189,7 +223,7 @@ def command_list(message):
 
         bot.send_message(message.chat.id, response_text)
         return
-        
+
     name = command_split[1]
 
     if not dbhelper.name_exists_in_chat(name, message.chat.id):
@@ -290,7 +324,8 @@ if __name__ == "__main__":
         # Delay for correct webhook setting
         time.sleep(1)
 
-        r = bot.set_webhook(url=config.WEBHOOK_URL_BASE + config.WEBHOOK_URL_PATH)
+        r = bot.set_webhook(url=config.WEBHOOK_URL_BASE +
+                            config.WEBHOOK_URL_PATH)
         print(r)
 
         app.run(host=config.WEBHOOK_LISTEN,
