@@ -124,7 +124,11 @@ def command_create(message):
         bot.send_message(message.chat.id, response_text)
         return
 
-    response_text = f"Queue: {name}\nNumber of members: 0\nMembers:\n"
+    response_text = "🔴🔴🔴\n" \
+        f"\nQueue: {name}" \
+        "\nNumber of members: 0" \
+        "\nStatus: ✅\n" \
+        "\nMembers:\n"
     message_id = bot.send_message(message.chat.id, response_text,
                                   reply_markup=queue_markup()).message_id
 
@@ -155,7 +159,10 @@ def command_delete(message):
 
     queue_id = dbhelper.get_queue_id_by_name(message.chat.id, name)
     dbhelper.delete_queue(message.chat.id, name)
-    bot.edit_message_reply_markup(message.chat.id, queue_id)
+    queue_message = bot.edit_message_reply_markup(message.chat.id, queue_id)
+    edited_text = queue_message.text.replace("✅", "❌")
+    bot.edit_message_text(edited_text, queue_message.chat.id, queue_id)
+
 
     response_text = f"Queue '{name}' was successfully deleted😋"
     bot.send_message(message.chat.id, response_text)
@@ -195,7 +202,7 @@ def deleteall_queues(message):
             bot.register_next_step_handler(msg, deleteall_queues)
 
     except Exception as e:
-        bot.reply_to(message, "Oooops🥴🥴🥴")
+        bot.reply_to(message, "Oooops🥴🥴🥴 Please, contact your chat administrator")
 
 
 @bot.message_handler(commands=["list"], func=lambda message: message.chat.type == "group")
@@ -260,7 +267,12 @@ def callback_query(call):
         if is_queue_entered:
             name, queue = dbhelper.get_queue(chat_id, queue_id)
 
-            edited_text = f"Queue: {name}\nNumber of members: {len(queue)}\nMembers:\n{queue_output(chat_id, queue)}"
+            edited_text = f"🔴🔴🔴\n" \
+                f"\nQueue: {name}" \
+                f"\nNumber of members: {len(queue)}" \
+                f"\nStatus: ✅\n" \
+                f"\nMembers:\n{queue_output(chat_id, queue)}"
+            
             bot.edit_message_text(
                 edited_text,
                 chat_id,
@@ -287,7 +299,12 @@ def callback_query(call):
         if is_queue_left:
             name, queue = dbhelper.get_queue(chat_id, queue_id)
 
-            edited_text = f"Queue: {name}\nNumber of members: {len(queue)}\nMembers:\n{queue_output(chat_id, queue)}"
+            edited_text = f"🔴🔴🔴\n" \
+                f"\nQueue: {name}" \
+                f"\nNumber of members: {len(queue)}" \
+                f"\nStatus: ✅\n" \
+                f"\nMembers:\n{queue_output(chat_id, queue)}"
+
             bot.edit_message_text(
                 edited_text,
                 chat_id,
