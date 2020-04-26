@@ -199,7 +199,7 @@ def delete_all_queues(chat_id: int) -> list:
 
     try:
         cursor.execute(
-            """SELECT chat_id FROM queues
+            """SELECT queue_id FROM queues
             WHERE (chat_id = ?)
             """,
             (chat_id,)
