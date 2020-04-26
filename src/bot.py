@@ -167,7 +167,11 @@ def command_delete(message):
     is_admin(message.chat.id, message.from_user.id)
 )
 def command_deleteall(message):
-
+    if dbhelper.count_queue_in_chat(message.chat.id) == 0:
+        response_text = "Oh, there are no queues in this chat😕"
+        bot.send_message(message.chat.id, response_text)
+        return
+    
     response_text = "Are you sure you want to delete all queues in this group? Yes/No"
     msg = bot.reply_to(message, response_text)
     bot.register_next_step_handler(msg, deleteall_queues)
@@ -175,14 +179,14 @@ def command_deleteall(message):
 
 def deleteall_queues(message):
     try:
-        if message.text.lower().strip() in ["yes", "y", "ye"]:
+        if message.text.lower().strip() in ["yes", "y", "ye", "yep"]:
             queue_id_list = dbhelper.delete_all_queues(message.chat.id)
             for qid in queue_id_list:
                 bot.edit_message_reply_markup(message.chat.id, qid)
 
             response_text = "All queues was successfully deleted💀💀💀"
             bot.send_message(message.chat.id, response_text)
-        elif message.text.lower().strip() in ["no", "n"]:
+        elif message.text.lower().strip() in ["no", "n", "nope"]:
             response_text = "Well, finish it😐"
             bot.send_message(message.chat.id, response_text)
         else:
@@ -191,8 +195,7 @@ def deleteall_queues(message):
             bot.register_next_step_handler(msg, deleteall_queues)
 
     except Exception as e:
-        print(e.__traceback__)
-        bot.reply_to(message, "Oooops")
+        bot.reply_to(message, "Oooops🥴🥴🥴")
 
 
 @bot.message_handler(commands=["list"], func=lambda message: message.chat.type == "group")
@@ -227,7 +230,7 @@ def command_list(message):
     name = command_split[1]
 
     if not dbhelper.name_exists_in_chat(name, message.chat.id):
-        response_text = f"Sorry, but the queue with the name '{name}' does not exist☹️"
+        response_text = f"Sorry, I can't find the queue with the name '{name}'☹️"
         bot.send_message(message.chat.id, response_text)
         return
 
