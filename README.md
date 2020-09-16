@@ -2,10 +2,6 @@
 
 Bot written with PyTelegramBotAPI and used to create simple small queues for some local events.
 
-## *Table of contents*
-
-***TODO***
-
 ## Usage
 
 QueueBot can be used only in group chats (for obvious reasons) and supports a few commands:
@@ -19,17 +15,4 @@ QueueBot can be used only in group chats (for obvious reasons) and supports a fe
 | /find QUEUE_NAME | Find a queue in chat (answer is a reply message to specified queue) |
 
 When the queue is created, each chat participant can enter and leave this queue by clicking the appropriate button. All chat members can take only one place in each queue. Leaving the chat does not affect queues.
-
-### COMMANDS TODO
-| command | Description |
-| ------- | ----------- |
-| /swap QUEUE_NAME TARGET_PLACE | Swap users at specified positions in the queue. Both users at specified places should use this command. |
-| /delete_all | Delete all queues in the chat |
-| /kick QUEUE_NAME PLACE | Kick user from specified position |
-
-### BUGS
-- cyrillic names are case sensetive (sqlite bug)
-- exception with markdown parsing in enter/leave commands to queues with underline in name
-- WHAT IF USER DELETE MESSAGE WITH QUEUE?
-
 
